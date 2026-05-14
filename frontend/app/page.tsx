@@ -2,18 +2,40 @@
 
 import { useCallback, useState } from "react";
 
-/** Base URL for the FastAPI server (override for deployed backends). */
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+/**
+ * Chat endpoint URL.
+ * - Default: same-origin `/api/chat` (Next.js rewrites to FastAPI — avoids CORS and many "Failed to fetch" cases).
+ * - Set `NEXT_PUBLIC_API_BASE_URL` only if you need the browser to call the API directly.
+ */
+function getChatUrl(): string {
+  const base = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "");
+  if (base) return `${base}/api/chat`;
+  return "/api/chat";
+}
+
+const CHAT_URL = getChatUrl();
 
 type ChatSuccess = { reply: string };
 type ChatErrorBody = { detail?: string | { msg?: string }[] };
+
+function formatFetchError(message: string): string {
+  if (message !== "Failed to fetch" && !message.includes("NetworkError")) {
+    return message;
+  }
+  return [
+    "Could not reach the API (network error).",
+    "",
+    "• Start the FastAPI app on port 8000, then try again.",
+    "• Local dev proxies /api/chat → http://127.0.0.1:8000 (set BACKEND_URL in .env.local if your API is elsewhere).",
+    "• If you use NEXT_PUBLIC_API_BASE_URL, the browser calls that URL directly (HTTPS sites cannot use http:// APIs).",
+  ].join("\n");
+}
 
 /**
  * Calls POST /api/chat with the user message and returns the model reply text.
  */
 async function fetchExplanation(message: string): Promise<string> {
-  const res = await fetch(`${API_BASE}/api/chat`, {
+  const res = await fetch(CHAT_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ message }),
@@ -58,7 +80,9 @@ export default function Home() {
         const reply = await fetchExplanation(trimmed);
         setExplanation(reply);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Something went wrong.");
+        const msg =
+          err instanceof Error ? err.message : "Something went wrong.";
+        setError(formatFetchError(msg));
       } finally {
         setLoading(false);
       }
@@ -104,7 +128,7 @@ export default function Home() {
         {error && (
           <div
             role="alert"
-            className="mt-8 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+            className="mt-8 whitespace-pre-line rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
           >
             {error}
           </div>

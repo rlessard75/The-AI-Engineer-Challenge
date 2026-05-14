@@ -5,7 +5,7 @@ Next.js UI for pasting complicated text and receiving a plain-English explanatio
 ## Prerequisites
 
 - Node.js 20+ (LTS recommended)
-- The API running locally (see the repository root `api/` app), typically at `http://localhost:8000`
+- The API running locally (see the repository root `api/` app), typically on **port 8000**
 
 ## Run locally
 
@@ -15,7 +15,7 @@ Next.js UI for pasting complicated text and receiving a plain-English explanatio
    npm install
    ```
 
-2. Start the FastAPI server on port 8000 from the project root (however you usually run `api/index.py`).
+2. Start **FastAPI** on port **8000** (for example `uvicorn api.index:app --reload --port 8000` from the repo root, depending on how you run the app).
 
 3. Start the Next.js dev server:
 
@@ -23,17 +23,16 @@ Next.js UI for pasting complicated text and receiving a plain-English explanatio
    npm run dev
    ```
 
-4. Open [http://localhost:3000](http://localhost:3000). Submit text; the app calls `POST http://localhost:8000/api/chat` with `{ "message": "..." }` and shows the `reply` field.
+4. Open [http://localhost:3000](http://localhost:3000). Submit text.
+
+By default the browser calls **`POST /api/chat` on the same host as the Next app** (e.g. `http://localhost:3000/api/chat`). Next.js **rewrites** that request to your FastAPI app at **`http://127.0.0.1:8000/api/chat`**, so you avoid many cross-origin and “Failed to fetch” problems. The JSON body is still `{ "message": "..." }` and the UI reads the `reply` field.
 
 ## Configuration
 
-By default the client uses `http://localhost:8000`. To point at another host (for example a deployed API), set:
-
-```bash
-NEXT_PUBLIC_API_BASE_URL=https://your-api.example.com
-```
-
-Create a `.env.local` file in this folder with that variable if you need a non-default base URL.
+| Variable | Where | Purpose |
+|----------|--------|---------|
+| `BACKEND_URL` | `.env.local` (server only) | Base URL for the rewrite target (default `http://127.0.0.1:8000`). |
+| `NEXT_PUBLIC_API_BASE_URL` | `.env.local` | If set, the **browser** calls this base URL + `/api/chat` directly instead of using the proxy. Use when you intentionally want a public API URL; the page and API must be callable under the browser’s security rules (e.g. no `http://` API from an `https://` site). |
 
 ## Scripts
 
