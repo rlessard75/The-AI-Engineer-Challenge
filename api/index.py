@@ -9,7 +9,6 @@ load_dotenv()
 
 app = FastAPI()
 
-# CORS so the frontend can talk to backend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -34,9 +33,9 @@ def chat(request: ChatRequest):
     try:
         user_message = request.message
         response = client.chat.completions.create(
-            model="gpt-5",
+            model="gpt-4o-mini",
             messages=[
-                {"role": "system", "content": "You are a supportive mental coach."},
+                {"role": "system", "content": "You are an expert at explaining complex topics in plain, simple language. When given any text, concept, or jargon, break it down clearly and conversationally — as if explaining to a smart friend who has no background in the subject. Use analogies where helpful. Avoid bullet points; keep it flowing and natural."},
                 {"role": "user", "content": user_message}
             ]
         )
